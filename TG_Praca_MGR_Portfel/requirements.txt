@@ -1,5 +1,6 @@
 copy
 datetime
+keras==2.11.0
 matplotlib==3.5.2
 mplfinance==0.12.9b5
 numpy==1.21.6
