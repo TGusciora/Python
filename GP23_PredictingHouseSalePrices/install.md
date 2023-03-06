@@ -1,4 +1,4 @@
-# GP23_cookiecutter_test guide installation
+# GP23_PredictingHouseSalePrices guide installation
 
 ## Prerequisites
 
@@ -9,14 +9,14 @@
 
 ```bash
 conda env create -f environment.yml
-activate GP23_cookiecutter_test
+activate gp23package
 ```
 
 or 
 
 ```bash
 mamba env create -f environment.yml
-activate GP23_cookiecutter_test
+activate gp23package
 ```
 
 The packages necessary to run the project are now installed inside the conda environment.
@@ -25,7 +25,7 @@ The packages necessary to run the project are now installed inside the conda env
 
 ## Set up project's module
 
-To move beyond notebook prototyping, all reusable code should go into the `GP23_cookiecutter_test/` folder package. To use that package inside your project, install the project's module in editable mode, so you can edit files in the `GP23_cookiecutter_test` folder and use the modules inside your notebooks :
+To move beyond notebook prototyping, all reusable code should go into the `gp23package/` folder package. To use that package inside your project, install the project's module in editable mode, so you can edit files in the `gp23package` folder and use the modules inside your notebooks :
 
 ```bash
 pip install --editable .
@@ -41,7 +41,7 @@ To use the module inside your notebooks, add `%autoreload` at the top of your no
 Example of module usage :
 
 ```python
-from GP23_cookiecutter_test.utils.paths import data_dir
+from gp23package.utils.paths import data_dir
 data_dir()
 ```
 

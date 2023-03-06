@@ -18,13 +18,13 @@ def readme() -> str:
     return open(os.path.join(os.path.dirname(__file__), 'README.md')).read()
 
 setup(
-    name='GP23_cookiecutter_test',
+    name='gp23package',
     version='0.1',
-    author='Tomasz G',
+    author='Tomasz G.',
     author_email='tgprogramming1@gmail.com',
-    description='Guided project - cookiecutter test',
+    description='Guided Project 23 from DataQuest.io Data Scientist in Python path. Predicting house sale prices based on Ames, Iowa dataset.',
     python_requires='>=3',
-    license='',
+    license='MIT',
     url='',
     packages=find_packages(),
     long_description=readme(),

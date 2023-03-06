@@ -1,6 +1,6 @@
-# GP23_cookiecutter_test
+# GP23_PredictingHouseSalePrices
 
-Guided project - cookiecutter test
+Guided Project 23 from DataQuest.io Data Scientist in Python path. Predicting house sale prices based on Ames, Iowa dataset.
   
 ## Installation guide
 
@@ -35,10 +35,10 @@ Please read [install.md](install.md) for details on how to set up this project.
     │                         apply when searching head of project.
     │
     ├── setup.py           <- Makes project pip installable (pip install -e .)
-    │                         so GP23_cookiecutter_test can be imported.
+    │                         so gp23package can be imported.
     │
     └── source_codes               <- Source code for use in this project.
-        ├── __init__.py    <- Makes GP23_cookiecutter_test a Python module.
+        ├── __init__.py    <- Makes gp23package a Python module.
         │
         ├── data           <- Scripts to download, import or generate data.
         │   └── make_dataset.py
