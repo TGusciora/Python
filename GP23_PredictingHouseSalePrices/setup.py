@@ -1,5 +1,8 @@
 import os
 
+# import project package
+import gp23package
+
 from setuptools import setup, find_packages
 
 def readme() -> str:
