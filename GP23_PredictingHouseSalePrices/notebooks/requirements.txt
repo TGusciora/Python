@@ -1,0 +1,12 @@
+gp23package
+io
+os
+pandas==1.5.3
+session_info==1.0.0
+sys==3.9.13(main,Aug252022,23:51:50)[MSCv.191664bit(AMD64)]
+time
+IPython==8.10.0
+jupyter_client==7.4.9
+jupyter_core==4.11.1
+jupyterlab==3.4.4
+notebook==6.4.12
