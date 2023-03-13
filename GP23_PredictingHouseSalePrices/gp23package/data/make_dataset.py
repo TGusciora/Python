@@ -3,7 +3,11 @@ import os
 
 class MakeDataset:
     """ Create dataset (pandas DataFrame) from imported raw file_name
-    
+
+    Required libraries:
+    import pandas as pd
+    import os
+
     - **parameters**, **types**, **return** and **return types**::
 
     :param file_name: raw file name to be imported. Has to be in
@@ -34,8 +38,3 @@ class MakeDataset:
         # Import raw file as data pandas DataFrame
         data = pd.read_csv(full_path, delimiter="\t")
         return data
-
-
-# data = MakeDataset('AmesHousing.tsv').data
-# print(data)
-# print(type(data))
