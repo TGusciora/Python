@@ -3,6 +3,7 @@ import seaborn as sn
 import pandas as pd
 from IPython.display import display, HTML
 
+
 def var_boxplot(var, data, target, title, xrotate=0):
     """ Create boxplot of variable vs descending median of target
     and provide frequency table for variable values. Caution:

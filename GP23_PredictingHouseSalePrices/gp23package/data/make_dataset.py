@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 
+
 class MakeDataset:
     """ Create dataset (pandas DataFrame) from imported raw file_name
 
