@@ -1,76 +1,86 @@
+import pandas as pd
+import numpy as np
+
+
 class TransformFeatures:
 
-    def __init__(self, data_in, na_var_list, numerical_var_list=numerical,
-                 cutoff_missing=0.25, cutoff_fill=0.05, fill_method='mode',
-                 print_details=True):
+    def __init__(self, data_in, na_var_list, numerical_var_list):
         """ Constructor method
         """
         self.data_in = data_in
         self.na_var_list = na_var_list
         self.numerical_var_list = numerical_var_list
 
-        data_out = pd.DataFrame()
-        dropped_cols = []
+        self.data_out = pd.DataFrame()
+        self.dropped_cols = []
+        self.missing_info = self.data_in.isna().sum()/len(self.data_in)
         self._drop_missing()
-        data_out=self._impute_values()
-        data_out=self._convert_categories()
+        self.data_out = self._impute_values()
+        self.data_out = self._convert_categories()
 
-        
-        return data_out
+        return self.data_out
 
-    def _drop_missing(self):
-        missing_info = self.data_in.isna().sum()/len(self.data_in)
+    def _drop_missing(self, cutoff_missing=0.25, print_details=True):
         for col in self.numerical_var_list:
-            p_miss = missing_info[missing_info.index == col][0]
+            p_miss = self.missing_info[self.missing_info.index == col][0]
             if p_miss > cutoff_missing:
-                if print_details == True:
-                    print(col + ' - dropped because of missing values exceeding ' + str(cutoff_missing) + '%.' +
-                        ' Missing values = '
-                        + str(round(p_miss*100,2)) + '%.')
-                dropped_cols.append(col)
+                if print_details is True:
+                    print(col + ' - dropped because missing values exceeding '
+                          + str(cutoff_missing) + '%.' +
+                          ' Missing values = '
+                          + str(round(p_miss*100, 2)) + '%.')
+                self.dropped_cols.append(col)
 
-    def _impute_values(self):
-        for col_n in data_in.select_dtypes('number'):
-        p_miss = missing_info[missing_info.index == col_n][0]
-        if ((p_miss <= cutoff_fill) & (p_miss > 0)):
-            if fill_method == 'mode':
-                fill=data_in[col_n].mode()[0]
-            elif fill_method == 'mean':
-                fill=np.mean(data_in[col_n])
-            elif fill_method == 'median':
-                fill=np.median(data_in[col_n])
+    def _impute_values(self, cutoff_fill=0.05, fill_method='mode',
+                       print_details=True):
+        for col_n in self.data_in.select_dtypes('number'):
+            p_miss = self.missing_info[self.missing_info.index == col_n][0]
+            if ((p_miss <= cutoff_fill) & (p_miss > 0)):
+                if fill_method == 'mode':
+                    fill = self.data_in[col_n].mode()[0]
+                elif fill_method == 'mean':
+                    fill = np.mean(self.data_in[col_n])
+                elif fill_method == 'median':
+                    fill = np.median(self.data_in[col_n])
+                else:
+                    if print_details is True:
+                        print(fill_method
+                              + ' is not known. Column will not be transformed')
+                    continue
+                # Adding variable indicating missing value
+                self.data_out[col_n+'_NA'] = np.where(self.data_in[col_n].isnull(),
+                                                      1, 0)
+                self.data_out[col_n] = self.data_in[col_n].fillna(value=fill)
+                if print_details is True:
+                    print(col_n + ' - ' + str(round(p_miss*100, 4))
+                          + '% of missing values. They are replaced with '
+                          + fill_method + ' value - ' + str(fill))
+                    print(col_n+'_NA'
+                          + ' is created to indicate missing values of'
+                          + ' original variable.')
+                try:
+                    self.na_var_list.append(col_n+'_NA')
+                    if print_details is True:
+                        print(col_n+'_NA added to na_var_list.')
+                except:
+                    if print_details is True:
+                        print(col_n+'_NA already in na_var_list.')
             else:
-                if print_details == True:
-                    print(fill_method + ' is not known. Column will not be transformed')
-                continue
-            data_out[col_n+'_NA'] = np.where(data_in[col_n].isnull(), 1, 0) # Adding variable indicating missing value
-            data_out[col_n] = data_in[col_n].fillna(value = fill)
-            if print_details == True:
-                print(col_n + ' - ' + str(round(p_miss*100,4)) + '% of missing values. They are replaced with '
-                    + fill_method + ' value - ' + str(fill))
-                print(col_n+'_NA' + ' is created to indicate missing values of original variable.')
-            try:
-                na_var_list.append(col_n+'_NA')
-                if print_details == True:
-                    print(col_n+'_NA added to na_var_list.')
-            except:
-                if print_details == True:
-                    print(col_n+'_NA already in na_var_list.')
-        else :
-            data_out[col_n] = data_in[col_n]
-            if print_details == True:
-                print(col_n + ' - ' + str(round(p_miss*100,4)) + '% of missing values. Variable copied.')
+                self.data_out[col_n] = self.data_in[col_n]
+                if print_details is True:
+                    print(col_n + ' - ' + str(round(p_miss*100, 4))
+                          + '% of missing values. Variable copied.')
 
     def _convert_categories(self):
-        for col_c in data_in.select_dtypes(exclude='number'):
-        data_out[col_c] = data_in[col_c].astype('category')
+        for col_c in self.data_in.select_dtypes(exclude='number'):
+            self.data_out[col_c] = self.data_in[col_c].astype('category')
 
 
-def transform_features(data_in, na_var_list, cutoff_missing = 0.25, cutoff_fill = 0.05, fill_method = 'mode', 
-                      print_details = True):
+def transform_features(data_in, na_var_list, numerical_var_list, cutoff_missing=0.25,
+                       cutoff_fill=0.05, fill_method='mode', print_details=True):
     """
     Transform features based on their characteristics.
-    
+
     Parameters
     ----------
     data_in : str
@@ -92,8 +102,7 @@ def transform_features(data_in, na_var_list, cutoff_missing = 0.25, cutoff_fill 
         Percentage of DS dataset to be used as train. 
     print_details : bool, default = True
         Parameter controlling informative output. If set to false function will supress displaying of detailed information.
-
-        
+    
     Returns
     -------
     data_out : DataFrame
@@ -102,44 +111,50 @@ def transform_features(data_in, na_var_list, cutoff_missing = 0.25, cutoff_fill 
     data_out = pd.DataFrame()
     missing_info = data_in.isna().sum()/len(data_in)
     dropped_cols = []
-    for col in numerical:
+    for col in numerical_var_list:
         p_miss = missing_info[missing_info.index == col][0]
         if p_miss > cutoff_missing:
-            if print_details == True:
-                print(col + ' - dropped because of missing values exceeding ' + str(cutoff_missing) + '%.' +
+            if print_details is True:
+                print(col + ' - dropped because of missing values exceeding '
+                      + str(cutoff_missing) + '%.' +
                       ' Missing values = '
-                     + str(round(p_miss*100,2)) + '%.')
+                      + str(round(p_miss*100,2)) + '%.')
             dropped_cols.append(col)
     for col_n in data_in.select_dtypes('number'):
         p_miss = missing_info[missing_info.index == col_n][0]
         if ((p_miss <= cutoff_fill) & (p_miss > 0)):
             if fill_method == 'mode':
-                fill=data_in[col_n].mode()[0]
+                fill = data_in[col_n].mode()[0]
             elif fill_method == 'mean':
-                fill=np.mean(data_in[col_n])
+                fill = np.mean(data_in[col_n])
             elif fill_method == 'median':
-                fill=np.median(data_in[col_n])
+                fill = np.median(data_in[col_n])
             else:
-                if print_details == True:
-                    print(fill_method + ' is not known. Column will not be transformed')
+                if print_details is True:
+                    print(fill_method + ' is not known. Column will'
+                          +' not be transformed')
                 continue
-            data_out[col_n+'_NA'] = np.where(data_in[col_n].isnull(), 1, 0) # Adding variable indicating missing value
-            data_out[col_n] = data_in[col_n].fillna(value = fill)
-            if print_details == True:
-                print(col_n + ' - ' + str(round(p_miss*100,4)) + '% of missing values. They are replaced with '
-                    + fill_method + ' value - ' + str(fill))
-                print(col_n+'_NA' + ' is created to indicate missing values of original variable.')
+            # Adding variable indicating missing value
+            data_out[col_n+'_NA'] = np.where(data_in[col_n].isnull(), 1, 0)
+            data_out[col_n] = data_in[col_n].fillna(value=fill)
+            if print_details is True:
+                print(col_n + ' - ' + str(round(p_miss*100, 4)) 
+                      + '% of missing values. They are replaced with '
+                      + fill_method + ' value - ' + str(fill))
+                print(col_n+'_NA' + ' is created to indicate '
+                      + 'missing values of original variable.')
             try:
                 na_var_list.append(col_n+'_NA')
-                if print_details == True:
+                if print_details is True:
                     print(col_n+'_NA added to na_var_list.')
             except:
-                if print_details == True:
+                if print_details is True:
                     print(col_n+'_NA already in na_var_list.')
-        else :
+        else:
             data_out[col_n] = data_in[col_n]
-            if print_details == True:
-                print(col_n + ' - ' + str(round(p_miss*100,4)) + '% of missing values. Variable copied.')
+            if print_details is True:
+                print(col_n + ' - ' + str(round(p_miss*100, 4))
+                      + '% of missing values. Variable copied.')
     for col_c in data_in.select_dtypes(exclude='number'):
             data_out[col_c] = data_in[col_c].astype('category')
     return data_out
