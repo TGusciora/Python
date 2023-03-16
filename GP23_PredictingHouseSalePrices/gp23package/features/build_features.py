@@ -3,6 +3,36 @@ import numpy as np
 
 
 class TransformFeatures:
+    """ Create pandas dataframe with transformed numerical features to
+    drop variables with high % of missing values, impute missing values
+    for variables with low % of missing values nad convert non-numerical
+    features to category type.
+
+    Transofmations:
+    Dropping columns - if more than X% missing values (default: 25%)
+    Imputing values - if max X% missing values (default: 25%) with
+    provided method (default: mode). For imputed variables also binary
+    variables (variable name + '_NA') created indicating if there was
+    imputation for given record (value = 1). Imputation variables are
+    added to self.na_var_list (list of discrete variables).
+
+    # Next - input mode and cutoffs as class variables (for inheritance 
+    and ease of read)
+
+    Required libraries:
+    import pandas as pd
+    import numpy as np
+
+    - **parameters**, **types**, **return** and **return types**::
+
+    :param file_name: raw file name to be imported. Has to be in
+    \\data\\raw folder.
+    :type file_name: str
+    :ivar file_name: file_name passed to the instance on creation
+    :ivar data: created pandas DataFrame from imported raw source file
+    :return: imported data file
+    :rtype: pandas DataFrame
+    """
 
     def __init__(self, data_in, na_var_list, numerical_var_list):
         """ Constructor method
@@ -10,29 +40,30 @@ class TransformFeatures:
         self.data_in = data_in
         self.na_var_list = na_var_list
         self.numerical_var_list = numerical_var_list
-
         self.data_out = pd.DataFrame()
         self.dropped_cols = []
-        self.missing_info = self.data_in.isna().sum()/len(self.data_in)
-        self._drop_missing()
-        self.data_out = self._impute_values()
-        self.data_out = self._convert_categories()
 
+    def output(self):
+        self.missing_info = self.data_in.isna().sum()/len(self.data_in)
+        self.print_details = True
+        self._drop_missing()
+        self._impute_values()
+        self._convert_categories()
+        self.data_out.drop(self.dropped_cols)
         return self.data_out
 
-    def _drop_missing(self, cutoff_missing=0.25, print_details=True):
+    def _drop_missing(self, cutoff_missing=0.25):
         for col in self.numerical_var_list:
             p_miss = self.missing_info[self.missing_info.index == col][0]
             if p_miss > cutoff_missing:
-                if print_details is True:
+                if self.print_details is True:
                     print(col + ' - dropped because missing values exceeding '
                           + str(cutoff_missing) + '%.' +
                           ' Missing values = '
                           + str(round(p_miss*100, 2)) + '%.')
                 self.dropped_cols.append(col)
 
-    def _impute_values(self, cutoff_fill=0.05, fill_method='mode',
-                       print_details=True):
+    def _impute_values(self, cutoff_fill=0.05, fill_method='mode'):
         for col_n in self.data_in.select_dtypes('number'):
             p_miss = self.missing_info[self.missing_info.index == col_n][0]
             if ((p_miss <= cutoff_fill) & (p_miss > 0)):
@@ -43,15 +74,15 @@ class TransformFeatures:
                 elif fill_method == 'median':
                     fill = np.median(self.data_in[col_n])
                 else:
-                    if print_details is True:
+                    if self.print_details is True:
                         print(fill_method
-                              + ' is not known. Column will not be transformed')
+                              + ' is not known. Column won\'t be transformed')
                     continue
                 # Adding variable indicating missing value
                 self.data_out[col_n+'_NA'] = np.where(self.data_in[col_n].isnull(),
                                                       1, 0)
                 self.data_out[col_n] = self.data_in[col_n].fillna(value=fill)
-                if print_details is True:
+                if self.print_details is True:
                     print(col_n + ' - ' + str(round(p_miss*100, 4))
                           + '% of missing values. They are replaced with '
                           + fill_method + ' value - ' + str(fill))
@@ -60,14 +91,14 @@ class TransformFeatures:
                           + ' original variable.')
                 try:
                     self.na_var_list.append(col_n+'_NA')
-                    if print_details is True:
+                    if self.print_details is True:
                         print(col_n+'_NA added to na_var_list.')
-                except:
-                    if print_details is True:
+                except ValueError:
+                    if self.print_details is True:
                         print(col_n+'_NA already in na_var_list.')
             else:
                 self.data_out[col_n] = self.data_in[col_n]
-                if print_details is True:
+                if self.print_details is True:
                     print(col_n + ' - ' + str(round(p_miss*100, 4))
                           + '% of missing values. Variable copied.')
 
@@ -76,8 +107,9 @@ class TransformFeatures:
             self.data_out[col_c] = self.data_in[col_c].astype('category')
 
 
-def transform_features(data_in, na_var_list, numerical_var_list, cutoff_missing=0.25,
-                       cutoff_fill=0.05, fill_method='mode', print_details=True):
+def transform_features(data_in, na_var_list, numerical_var_list,
+                       cutoff_missing=0.25, cutoff_fill=0.05,
+                       fill_method='mode', print_details=True):
     """
     Transform features based on their characteristics.
 
