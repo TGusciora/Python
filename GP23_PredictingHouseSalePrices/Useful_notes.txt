@@ -1,0 +1,22 @@
+Sphinx go to:
+
+
+1) pip install sphinx
+2) cd doc directory (must be in project folder)
+
+
+C:\Users\tgusc\Documents\GitHub\Python\GP23_PredictingHouseSalePrices\doc
+
+3) sphinx-quickstart
+
+4) adjust config.py file
+
+uncomment os system options to use os path abspath
+
+extensions = ['sphinx.ext.autodoc'
+]
+
+
+5) run 
+
+sphinx-build -b html source build

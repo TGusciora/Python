@@ -11,13 +11,13 @@ class MakeDataset:
 
     - **parameters**, **types**, **return** and **return types**::
 
-    :param file_name: raw file name to be imported. Has to be in
-    \\data\\raw folder.
-    :type file_name: str
-    :ivar file_name: file_name passed to the instance on creation
-    :ivar data: created pandas DataFrame from imported raw source file
-    :return: imported data file
-    :rtype: pandas DataFrame
+        :parameter file_name: raw file name to be imported. Has to be in
+        \\data\\raw folder.
+        :type file_name: str
+        :ivar file_name: file_name passed to the instance on creation
+        :ivar data: created pandas DataFrame from imported raw source file
+        :return: imported data file
+        :rtype: pandas DataFrame
     """
 
     def __init__(self, file_name):

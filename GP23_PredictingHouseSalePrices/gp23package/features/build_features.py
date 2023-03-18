@@ -1,5 +1,18 @@
+"""
+.. module:: build_features
+        :platform: Unix, Windows
+        :synopsis: Module containing classes and functions for data 
+        transformation.
+
+.. moduleauthor:: Tomasz G <invalid@invalid.com>
+"""
+
 import pandas as pd
 import numpy as np
+
+# https://www.sphinx-doc.org/en/master/usage/quickstart.html
+# https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html
+# https://medium.com/@richdayandnight/a-simple-tutorial-on-how-to-document-your-python-project-using-sphinx-and-rinohtype-177c22a15b5b
 
 
 class TransformFeatures:
@@ -23,9 +36,7 @@ class TransformFeatures:
     import pandas as pd
     import numpy as np
 
-    - **parameters**, **types**, **return** and **return types**::
-
-    :param file_name: raw file name to be imported. Has to be in
+    :parameter file_name: raw file name to be imported. Has to be in
     \\data\\raw folder.
     :type file_name: str
     :ivar file_name: file_name passed to the instance on creation
