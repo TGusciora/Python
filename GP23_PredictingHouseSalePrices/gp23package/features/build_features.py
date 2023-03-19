@@ -1,12 +1,3 @@
-"""
-.. module:: build_features
-        :platform: Unix, Windows
-        :synopsis: Module containing classes and functions for data 
-        transformation.
-
-.. moduleauthor:: Tomasz G <invalid@invalid.com>
-"""
-
 import pandas as pd
 import numpy as np
 
@@ -29,15 +20,12 @@ class TransformFeatures:
     imputation for given record (value = 1). Imputation variables are
     added to self.na_var_list (list of discrete variables).
 
-    # Next - input mode and cutoffs as class variables (for inheritance 
-    and ease of read)
-
     Required libraries:
-    import pandas as pd
-    import numpy as np
+    * import pandas as pd
+    * import numpy as np
 
     :parameter file_name: raw file name to be imported. Has to be in
-    \\data\\raw folder.
+        \\data\\raw folder.
     :type file_name: str
     :ivar file_name: file_name passed to the instance on creation
     :ivar data: created pandas DataFrame from imported raw source file

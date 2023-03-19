@@ -11,24 +11,32 @@ Welcome to GP23_PredictingHouseSalePrices's documentation!
    :caption: Contents:
 
 GP23 package
-===================
+==================================
 .. automodule:: gp23package
    :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+   :special-members:
 
-Make dataset
-===================
+Module: Data - make_dataset
+==================================
 .. automodule:: gp23package.data.make_dataset
    :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
 
-Build features
-===================
+Module: Features - Build features
+==================================
 .. automodule:: gp23package.features.build_features
    :members:
-
-
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
 
 Indices and tables
-==================
+==================================
 
 * :ref:`genindex`
 * :ref:`modindex`
