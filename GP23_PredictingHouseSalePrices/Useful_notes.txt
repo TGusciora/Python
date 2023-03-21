@@ -5,7 +5,7 @@ Sphinx go to:
 2) cd doc directory (must be in project folder)
 
 
-C:\Users\tgusc\Documents\GitHub\Python\GP23_PredictingHouseSalePrices\doc
+cd C:\Users\tgusc\Documents\GitHub\Python\GP23_PredictingHouseSalePrices\doc
 
 3) sphinx-quickstart
 
