@@ -4,18 +4,28 @@ import os
 
 class MakeDataset:
     """
-    Class used to create dataset (pandas DataFrame) from imported
-    raw file_name.
+    Class creating pandas DataFrame from raw file_name.
+
+    Creates MakeDataset.data attribute, which represents pandas DataFrame
+    from imported project/data/raw/file_name file. Files from other directories
+    or files that are not delimited by tabulation (delimiter = "t") will raise
+    errors.
 
     Parameters
     -----------
     file_name : str
-        Raw file name to be imported. Has to be in <project>\data\raw folder.
+        Raw file name to be imported. Has to be in data/raw/ folder.
 
     Attributes
     ----------
     data : pandas DataFrame
         imported file
+
+    Notes
+    -------------------
+    Required libraries: \n
+    import pandas as pd \n
+    import os
 
     Methods
     -------
@@ -23,27 +33,25 @@ class MakeDataset:
         Constructor method.
     _import_dataset(self)
         Imports file_name and returns as pandas DataFrame.
-
-    Required libraries
-    -------------------
-        import pandas as pd
-        import os
     """
 
     def __init__(self, file_name):
-        """ Constructor method
+        """
+        Constructor method
         """
         self.file_name = file_name
         self.data = self._import_dataset()
 
     def _import_dataset(self):
-        """ Importing raw file from <project>\data\raw folder
-        Establishing raw data relative location based script location
+        """
+        Importing raw file from project/data/raw/ folder.
+
+        Establishing raw data relative location based script location.
 
         Returns
         --------
         data : pandas DataFrame
-            imported file
+            Imported file.
         """
         # Return main package / project directory
         absolute_path = os.path.abspath(os.path.join(__file__, "../../.."))

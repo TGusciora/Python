@@ -33,11 +33,7 @@ extensions = ['numpydoc'
               ]
 autodoc_typehints = 'signature'
 
-#               'sphinx.ext.duration',
-#              'sphinx.ext.doctest',
-#              'sphinx.ext.autodoc',
-#              'sphinx.ext.autosummary',
-
+numpydoc_validation_checks = {"all",'RT02','SA01','EX01'}
 
 autodoc_default_options = {
     'autoclass_content': 'both',
