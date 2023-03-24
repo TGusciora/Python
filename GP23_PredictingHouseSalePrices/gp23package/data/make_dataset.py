@@ -20,19 +20,22 @@ class MakeDataset:
     ----------
     data : pandas DataFrame
         imported file
+    delimiter :str
+        Delimiter in imported raw file. Used as pandas read_csv parameter.
 
     Notes
     -------------------
+    Imported raw file should be a .csv file. \n
     Required libraries: \n
-    import pandas as pd \n
-    import os
+    * import pandas as pd \n
+    * import os
 
     Methods
     -------
     __init__(self, file_name)
         Constructor method.
     _import_dataset(self)
-        Imports file_name and returns as pandas DataFrame.
+        Imports file_name and returns as self.data pandas DataFrame.
     """
 
     def __init__(self, file_name):
@@ -40,6 +43,7 @@ class MakeDataset:
         Constructor method
         """
         self.file_name = file_name
+        self.delimiter = "\t"
         self.data = self._import_dataset()
 
     def _import_dataset(self):
@@ -60,5 +64,5 @@ class MakeDataset:
         # Establish full path to raw file
         full_path = absolute_path + relative_path + self.file_name
         # Import raw file as data pandas DataFrame
-        data = pd.read_csv(full_path, delimiter="\t")
+        data = pd.read_csv(full_path, self.delimiter)
         return data

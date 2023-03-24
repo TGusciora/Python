@@ -21,12 +21,17 @@ class TransformFeatures:
     provided method (default: mode). For imputed variables also binary
     variables (variable name + '_NA') created indicating if there was
     imputation for given record (value = 1). Imputation variables are
-    added to self.na_var_list (list of discrete variables).
+    added to self.na_var_list (list of imputation variables).
 
     Parameters
     ----------
     data_in : str
         DataFrame to analyze.
+    numerical_var_list : []
+        List of numeric variables to be analyzed and transformed.
+    na_var_list : []
+        Name of input discrete variable list. Binary var_name + "_NA" 
+        variables are appended to that list.
     cutoff_missing : float64, default = 0.25
         Percentage of missing values used as cutoff point for dropping
         variable. If missings > cutoff_missing then drop variable from
@@ -36,13 +41,10 @@ class TransformFeatures:
         missing variables with fill_method. If missings < cutoff_fill
         then replace missing values with fill_method and create new
         variable var_name + "_NA" which indicates rows with missing
-        values for original variable
+        values for original variable.
     fill_method : str, default = 'mode'
         Filling method for missing values, when variable meets cutoff_fill
         criteria. Can choose from average, median, mode.
-    na_var_list : []
-        Name of variable list for the binary var_name + "_NA" variables to
-        be added to.
     print_details : bool, default = True
         Parameter controlling informative output. If set to false functiom
         will supress displaying of detailed information.
@@ -52,7 +54,8 @@ class TransformFeatures:
     data_in : pandas DataFrame
         Dataset with features to be analyzed and transformed
     na_var_list : []
-        list of discrete variables
+        Name of discrete variable list. Binary var_name + "_NA" variables
+        are appended to that list.
     numerical_var_list : []
         list of numeric variables
     data_out : pandas DataFrame
@@ -63,8 +66,8 @@ class TransformFeatures:
     Notes
     -------------------
     Required libraries: \n
-    import pandas as pd \n
-    import numpy as np
+    * import pandas as pd \n
+    * import numpy as np
 
     Methods
     -------
@@ -84,9 +87,9 @@ class TransformFeatures:
         Convert non-numeric variables to "category" type.
     """
 
-    def __init__(self, data_in, na_var_list, numerical_var_list,
-                 cutoff_missing=0.25, cutoff_fill=0.05,
-                 fill_method='mode', print_details=True):
+    def __init__(self, data_in, numerical_var_list, na_var_list,
+                 cutoff_missing=0.25, cutoff_fill=0.05, fill_method='mode',
+                 print_details=True):
         """ Constructor method
         """
         self.data_in = data_in
@@ -101,6 +104,17 @@ class TransformFeatures:
 
     def output(self):
         """
+        Generate transformed output.
+
+        Function calculates missing value % for each variable in dataset. Then
+        performs (in order): \n
+        1) Establishing list of variables to drop with missing values
+            exceeding cutoff_missing treshold
+        2) Imputing values according to fill_method parameter for variables
+            with missing values not exceeding treshold
+        3) Converting non-numeric variables to "category" type
+        4) Dropping columns calculated from point 1)
+
         Returns
         -------
         data_out : DataFrame
@@ -115,7 +129,7 @@ class TransformFeatures:
 
     def _drop_missing(self):
         """
-        Appends variables with many missing values to dropped_cols list.
+        Append variables with many missing values to dropped_cols list.
 
         Function checks for every variable if % of missing values exceeds
         cutoff_missing treshold. If it does, then adds variable name to
@@ -134,7 +148,7 @@ class TransformFeatures:
 
     def _impute_values(self):
         """
-        Imputes calculated values for missing values in features.
+        Impute calculated values for missing values in features.
 
         Function checks for every variable if % of missing values does not
         exceed cutoff_fill treshold. If it doesn't, for missing value records
@@ -183,7 +197,10 @@ class TransformFeatures:
 
     def _convert_categories(self):
         """
-        Converts non-numeric variables to 'category' type.
+        Convert non-numeric variables to 'category' type.
+
+        Selects all non-number type variables in self.data_out dataset
+        and converts them to 'category' type.
         """
-        for col_c in self.data_in.select_dtypes(exclude='number'):
+        for col_c in self.data_out.select_dtypes(exclude='number'):
             self.data_out[col_c] = self.data_in[col_c].astype('category')
