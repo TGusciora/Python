@@ -202,5 +202,5 @@ class TransformFeatures:
         Selects all non-number type variables in self.data_out dataset
         and converts them to 'category' type.
         """
-        for col_c in self.data_out.select_dtypes(exclude='number'):
+        for col_c in self.data_in.select_dtypes(exclude='number'):
             self.data_out[col_c] = self.data_in[col_c].astype('category')
