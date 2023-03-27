@@ -12,8 +12,8 @@ class FeatureCorrection:
     features to category type.
 
     Transformations:
-    Dropping columns - if more than X% missing values (default: 25%)
-    Imputing values - if max X% missing values (default: 25%) with
+    Dropping columns - if more than X% missing values (default: 25%) \n
+    Imputing values - if max X% missing values (default: 25%) with 
     provided method (default: mode). For imputed variables also binary
     variables (variable name + '_NA') created indicating if there was
     imputation for given record (value = 1). Imputation variables are
@@ -26,7 +26,7 @@ class FeatureCorrection:
     numerical_var_list : []
         List of numeric variables to be analyzed and transformed.
     na_var_list : []
-        Name of input discrete variable list. Binary var_name + "_NA" 
+        Name of input discrete variable list. Binary var_name + "_NA"
         variables are appended to that list.
     cutoff_missing : float64, default = 0.25
         Percentage of missing values used as cutoff point for dropping
@@ -216,14 +216,6 @@ class FeatureBinning:
     continuous calculation is taken from listendata.com (see: Source materials
     2.)
 
-    Transformations:
-    Dropping columns - if more than X% missing values (default: 25%)
-    Imputing values - if max X% missing values (default: 25%) with
-    provided method (default: mode). For imputed variables also binary
-    variables (variable name + '_NA') created indicating if there was
-    imputation for given record (value = 1). Imputation variables are
-    added to self.na_var_list (list of imputation variables).
-
     Parameters
     ----------
     X_df : str
@@ -297,88 +289,105 @@ class FeatureBinning:
     optbin_dict : Dictionary
         optbin_dict[i]["optbin"] - metadata about transformation, parameter
         values
-        optbin_dict[i]["bin_table"] - table containing information about 
+        optbin_dict[i]["bin_table"] - table containing information about
         grouped category variables with below variables:
-                Bin - list of values representing grouped categories
-                Count - number of observations in bin
-                Count % - % of all observations in dataset
-                Sum - sum of dependent variable by bin
-                Mean - mean of dependent variable by bin
-                Min - minimum value of dependent variable by bin
-                Max - maximum value of dependent variable by bin
-                Zeros count - counting "0" values of dependent variable by bin
-                WoE - Weight of Evidence calculation as per source materials 2.
-                IV - Information Value specyfiying prediction power by bin
+                Bin - list of values representing grouped categories\n
+                Count - number of observations in bin \n
+                Count % - % of all observations in dataset \n
+                Sum - sum of dependent variable by bin \n
+                Mean - mean of dependent variable by bin \n
+                Min - minimum value of dependent variable by bin \n
+                Max - maximum value of dependent variable by bin \n
+                Zeros count - "0" values of dependent variable by bin \n
+                WoE - Weight of Evidence (See: source materials 2).\n
+                IV - Information Value specyfiying prediction power by bin\n
     """
     def __init__(self, X_df, y, var_list, prebin_method="quantile",
                  cat_coff=0.01, n_bins=10, metric="WoE", print_details=True):
         """ Constructor method
         """
         self.optibn_dict = {}
-        
-
-    def optbin_create(X_df, y, var_list, prebin_method="quantile", cat_coff = 0.01, n_bins = 10, print_details = True):
-
-        optbin_dict = {}
-        for i in var_list:
-            target_sum = y.sum()
-            optbin_dict[i] = {}
-            optbin = ContinuousOptimalBinning(name=i, prebinning_method=prebin_method, dtype="categorical", 
-                                            cat_cutoff = cat_coff, max_n_prebins = n_bins)
-            optbin_dict[i]["optbin"] = optbin
-            optbin_dict[i]["optbin"] = optbin_dict[i]["optbin"].fit(X_df[i], y)
-            bin_table = optbin_dict[i]["optbin"].binning_table.build()
-            optbin_dict[i]["bin_table"] = bin_table
-            optbin_dict[i]["bin_table"]["WoE"] = np.log((optbin_dict[i]["bin_table"]['Sum']/target_sum) /
-                                                        optbin_dict[i]["bin_table"]['Count (%)'])
-            optbin_dict[i]["bin_table"]["IV"] = ((optbin_dict[i]["bin_table"]['Sum']/target_sum) - 
-                                                optbin_dict[i]["bin_table"]['Count (%)']) * optbin_dict[i]["bin_table"]["WoE"]
-            optbin_dict[i]["bin_table"]["WoE"].fillna(0, inplace = True)
-            optbin_dict[i]["bin_table"]["IV"].fillna(0, inplace = True)
-            optbin_dict[i]["bin_table"].at['Totals', 'IV'] = optbin_dict[i]["bin_table"].iloc[:-1]['IV'].sum()
-            IV_temp = optbin_dict[i]["bin_table"].at['Totals', 'IV']
-            if print_details == True:
-                if IV_temp <= 0.02 :
-                    print(i,'- IV suggests not useful for prediction - ', IV_temp)
-                elif IV_temp <= 0.1 :
-                    print(i,'- IV suggests weak predictive power - ', IV_temp)
-                elif IV_temp <= 0.3 :
-                    print(i,'- IV suggests medium predictive power - ', IV_temp)
-                elif IV_temp <= 0.5 :
-                    print(i,'- IV suggests strong predictive power - ', IV_temp)
+        self.target_sum = y.sum()
+        self.var_list = var_list
+        self.prebin_method = prebin_method
+        self.X = X_df
+        self.y = y
+        self.cat_coff = cat_coff
+        self.n_bins = n_bins
+        self.metric = metric
+        self.print_details = print_details
+        self._optbin_create()
+      
+    def _optbin_create(self):
+        for i in self.var_list:
+            self.optbin_dict[i] = {}
+            optbin = ContinuousOptimalBinning(name=i,
+                                              prebinning_method=self.prebin_method,
+                                              dtype="categorical",
+                                              cat_cutoff=self.cat_coff,
+                                              max_n_prebins=self.n_bins)
+            self.optbin_dict[i]["optbin"] = self.optbin_dict[i]["optbin"].fit(self.X_df[i], self.y)
+            bin_table = self.optbin_dict[i]["optbin"].binning_table.build()
+            self.optbin_dict[i]["bin_table"] = bin_table
+            self.optbin_dict[i]["bin_table"]["WoE"] = np.log((self.optbin_dict[i]["bin_table"]['Sum']/self.target_sum) /
+                                                             self.optbin_dict[i]["bin_table"]['Count (%)'])
+            self.optbin_dict[i]["bin_table"]["IV"] = ((self.optbin_dict[i]["bin_table"]['Sum']/self.target_sum) -
+                                                      self.optbin_dict[i]["bin_table"]['Count (%)']) * self.optbin_dict[i]["bin_table"]["WoE"]
+            self.optbin_dict[i]["bin_table"]["WoE"].fillna(0, inplace=True)
+            self.optbin_dict[i]["bin_table"]["IV"].fillna(0, inplace=True)
+            self.optbin_dict[i]["bin_table"].at['Totals', 'IV'] = self.optbin_dict[i]["bin_table"].iloc[:-1]['IV'].sum()
+            IV_temp = self.optbin_dict[i]["bin_table"].at['Totals', 'IV']
+            if self.print_details is True:
+                if IV_temp <= 0.02:
+                    print(i, '- IV suggests not useful for prediction - ', IV_temp)
+                elif IV_temp <= 0.1:
+                    print(i, '- IV suggests weak predictive power - ', IV_temp)
+                elif IV_temp <= 0.3:
+                    print(i, '- IV suggests medium predictive power - ', IV_temp)
+                elif IV_temp <= 0.5:
+                    print(i, '- IV suggests strong predictive power - ', IV_temp)
                 else:
-                    print(i,'- IV suggests suspicious predictive power -', IV_temp)
-        return optbin_dict
+                    print(i, '- IV suggests suspicious predictive power -', IV_temp)
+        return self.optbin_dict
 
-
-    def var_transform(data, var_name, optbin_dict, metric = "WoE", print_details = True):
+    def transform(data, var_name, optbin_dict, metric="WoE",
+                  print_details=True):
         """
-        Transforming variable var_name from Dataframe data using optbin_dict to return encoded value of Weight of Evidence 
-        (WoE) or mean dependent value from corresponding bin (see Optbin_create function).
-        
-        Further possible enhancements: adding troubleshooting like try except instructions for values of metric outside ["WoE",
-        "Mean"] list. Currently for every value that is not equal to "WoE" function will transform variable using "Mean" 
+        Transforming dataset variables using stored transformation dictionary.
+
+        Transforming variable var_name from Dataframe data using optbin_dict
+        to return encoded value of Weight of Evidence (WoE) or mean dependent
+        value from corresponding bin (see Optbin_create function). Further
+        possible enhancements: adding troubleshooting like try except
+        instructions for values of metric outside ["WoE", "Mean"] list.
+        Currently for every value that is not equal to "WoE" function will
+        transform variable using "Mean"
         metric.
-        
+
         Parameters
         ----------
         data : str
-            DataFrame to analyze.
+            DataFrame with variables to transform.
         var_name : str
-            Variable name (dtype = categorical) from data that will be transformed for corresponding metric from optbin_dict.
+            Variable name (dtype = categorical) from data that will be
+            transformed for corresponding metric from optbin_dict.
         optbin_dict : str
-            Dictionary name from Optbin_create function. Storing information about optimal bins (grouped categories) and 
-            corresponding Weight of Evidence (WoE) and mean dependent variable value from bin.
+            Dictionary name from Optbin_create function. Storing information
+            about optimal bins (grouped categories) and corresponding Weight
+            of Evidence (WoE) and mean dependent variable value from bin.
         metric : str, default = 'WoE'
-            Metric to be returned instead of var_name category. Returns optbin_dict[var_name]["bin_table"]["WoE"] for "Woe"
-            value or optbin_dict[var_name]["bin_table"]["Mean"] for "Mean" value.
+            Metric to be returned instead of var_name category. Returns
+            optbin_dict[var_name]["bin_table"]["WoE"] for "Woe" value or
+            optbin_dict[var_name]["bin_table"]["Mean"] for "Mean" value.
         print_details : bool, default = True
-            Parameter controlling informative output. If set to false function will supress displaying of detailed information.
+            Parameter controlling informative output. If set to false
+            function will supress displaying of detailed information.
             
         Returns
         -------
         transformed : float
-            Series representing transformed variable from category to float values.
+            Series representing transformed variable from category to float 
+            values.
         """
         optbin = optbin_dict[var_name]["bin_table"]
         clean = optbin[['Bin','Mean','WoE','Count']].explode('Bin')
@@ -390,11 +399,10 @@ class FeatureBinning:
         if metric == 'WoE':
             dict_clean=clean.set_index("Bin")["WoE"].to_dict()
         else:
-            dict_clean=clean.set_index("Bin")["Mean"].to_dict()
-            
+            dict_clean=clean.set_index("Bin")["Mean"].to_dict()           
         if print_details == True:                    
             for i in pd.Series(data[var_name].unique()):
                 if i not in dict_clean:
                     print(var_name,':',i,' - value is not present in the binning table')
         transformed = data[var_name].map(dict_clean).fillna(dict_clean['Other'])
-        return transformed    
+        return transformed
