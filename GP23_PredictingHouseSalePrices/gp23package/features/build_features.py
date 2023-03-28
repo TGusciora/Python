@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-
+from optbinning import ContinuousOptimalBinning
+from scipy import stats
 
 class FeatureCorrection:
     """
@@ -267,10 +268,10 @@ class FeatureBinning:
         Imports file_name and returns as pandas DataFrame.
     __init__(self, file_name)
         Constructor method.
-    _drop_missing(self)
+    _optbin_create(self)
         Dropping variables with missing value % higher than cutoff_missing
         parameter value.
-    _impute_values(self)
+    transform(self, data, var_name)
         If % of missing values are higher than cutoff_fill, then fills
         selected variables with give fill_method (available values : mode,
         mean, median). Also creates binary _NA variables where 1 indicates
@@ -284,41 +285,43 @@ class FeatureBinning:
     1. Binning library <http://gnpalencia.org/optbinning/binning_continuous.html> \n
     2. WOE <https://www.listendata.com/2019/08/WOE-IV-Continuous-Dependent.html>
 
-    Returns
-    -------
-    optbin_dict : Dictionary
-        optbin_dict[i]["optbin"] - metadata about transformation, parameter
-        values
-        optbin_dict[i]["bin_table"] - table containing information about
-        grouped category variables with below variables:
-                Bin - list of values representing grouped categories\n
-                Count - number of observations in bin \n
-                Count % - % of all observations in dataset \n
-                Sum - sum of dependent variable by bin \n
-                Mean - mean of dependent variable by bin \n
-                Min - minimum value of dependent variable by bin \n
-                Max - maximum value of dependent variable by bin \n
-                Zeros count - "0" values of dependent variable by bin \n
-                WoE - Weight of Evidence (See: source materials 2).\n
-                IV - Information Value specyfiying prediction power by bin\n
     """
     def __init__(self, X_df, y, var_list, prebin_method="quantile",
                  cat_coff=0.01, n_bins=10, metric="WoE", print_details=True):
         """ Constructor method
         """
-        self.optibn_dict = {}
+        self.optbin_dict = {}
         self.target_sum = y.sum()
         self.var_list = var_list
         self.prebin_method = prebin_method
-        self.X = X_df
+        self.X_df = X_df
         self.y = y
         self.cat_coff = cat_coff
         self.n_bins = n_bins
         self.metric = metric
         self.print_details = print_details
         self._optbin_create()
-      
+
     def _optbin_create(self):
+        """
+        Returns
+        -------
+        optbin_dict : Dictionary
+            optbin_dict[i]["optbin"] - metadata about transformation, parameter
+            values
+            optbin_dict[i]["bin_table"] - table containing information about
+            grouped category variables with below variables:
+                    Bin - list of values representing grouped categories\n
+                    Count - number of observations in bin \n
+                    Count % - % of all observations in dataset \n
+                    Sum - sum of dependent variable by bin \n
+                    Mean - mean of dependent variable by bin \n
+                    Min - minimum value of dependent variable by bin \n
+                    Max - maximum value of dependent variable by bin \n
+                    Zeros count - "0" values of dependent variable by bin \n
+                    WoE - Weight of Evidence (See: source materials 2).\n
+                    IV - Information Value specyfiying prediction power by bin\n
+        """
         for i in self.var_list:
             self.optbin_dict[i] = {}
             optbin = ContinuousOptimalBinning(name=i,
@@ -326,6 +329,7 @@ class FeatureBinning:
                                               dtype="categorical",
                                               cat_cutoff=self.cat_coff,
                                               max_n_prebins=self.n_bins)
+            self.optbin_dict[i]["optbin"] = optbin
             self.optbin_dict[i]["optbin"] = self.optbin_dict[i]["optbin"].fit(self.X_df[i], self.y)
             bin_table = self.optbin_dict[i]["optbin"].binning_table.build()
             self.optbin_dict[i]["bin_table"] = bin_table
@@ -339,19 +343,18 @@ class FeatureBinning:
             IV_temp = self.optbin_dict[i]["bin_table"].at['Totals', 'IV']
             if self.print_details is True:
                 if IV_temp <= 0.02:
-                    print(i, '- IV suggests not useful for prediction - ', IV_temp)
+                    print(i, '- IV not useful for prediction - ', IV_temp)
                 elif IV_temp <= 0.1:
-                    print(i, '- IV suggests weak predictive power - ', IV_temp)
+                    print(i, '- IV weak predictive power - ', IV_temp)
                 elif IV_temp <= 0.3:
-                    print(i, '- IV suggests medium predictive power - ', IV_temp)
+                    print(i, '- IV medium predictive power - ', IV_temp)
                 elif IV_temp <= 0.5:
-                    print(i, '- IV suggests strong predictive power - ', IV_temp)
+                    print(i, '- IV strong predictive power - ', IV_temp)
                 else:
-                    print(i, '- IV suggests suspicious predictive power -', IV_temp)
+                    print(i, '- IV suspicious predictive power -', IV_temp)
         return self.optbin_dict
 
-    def transform(data, var_name, optbin_dict, metric="WoE",
-                  print_details=True):
+    def transform(self, data, var_name):
         """
         Transforming dataset variables using stored transformation dictionary.
 
@@ -382,27 +385,78 @@ class FeatureBinning:
         print_details : bool, default = True
             Parameter controlling informative output. If set to false
             function will supress displaying of detailed information.
-            
+
         Returns
         -------
         transformed : float
-            Series representing transformed variable from category to float 
+            Series representing transformed variable from category to float
             values.
         """
-        optbin = optbin_dict[var_name]["bin_table"]
-        clean = optbin[['Bin','Mean','WoE','Count']].explode('Bin')
-        clean.reset_index(drop = True, inplace = True)
+        optbin = self.optbin_dict[var_name]["bin_table"]
+        clean = optbin[['Bin', 'Mean', 'WoE', 'Count']].explode('Bin')
+        clean.reset_index(drop=True, inplace=True)
         clean = clean[(clean.Count != 0) & (clean.Bin != "")]
-        clean.drop(columns = 'Count', inplace = True)
+        clean.drop(columns='Count', inplace=True)
         clean.loc['Other'] = clean.iloc[-1]
-        clean.at['Other', 'Bin']='Other'
-        if metric == 'WoE':
-            dict_clean=clean.set_index("Bin")["WoE"].to_dict()
+        clean.at['Other', 'Bin'] = 'Other'
+        if self.metric == 'WoE':
+            dict_clean = clean.set_index("Bin")["WoE"].to_dict()
         else:
-            dict_clean=clean.set_index("Bin")["Mean"].to_dict()           
-        if print_details == True:                    
+            dict_clean = clean.set_index("Bin")["Mean"].to_dict()
+        if self.print_details is True:
             for i in pd.Series(data[var_name].unique()):
                 if i not in dict_clean:
-                    print(var_name,':',i,' - value is not present in the binning table')
+                    print(var_name, ':', i, ' - value is not present in the',
+                          ' binning table')
         transformed = data[var_name].map(dict_clean).fillna(dict_clean['Other'])
         return transformed
+
+class BoxCox:
+    """
+    Box-Cox variable transformation.
+
+    Transforming variable var from Dataframe data using Box-Cox transformation
+    (power transform) in order to provide better predictive characteristics
+    (stabilizes variance, makes variable distribution looking "more like"
+    normal distribution. Also updates pointed dictionary with lambda values
+    for transformed variables. This can be used for future scoring of new
+    data. Returns transformed variable.
+    Source material on Box-Cox transformation:
+
+    Parameters
+    ----------
+    data : str
+        DataFrame to analyze.
+    var_name : str
+        Variable name (dtype = numerical) from data that will be transformed.
+    transformation_dict : str
+        Dictionary name storing lambda parameters for Box Cox transformations
+        from data that will be transformed.
+    print_details : bool, default = True
+        Parameter controlling informative output. If set to false function
+        will supress displaying of detailed information.
+
+    Notes
+    -------------------
+    Required libraries: \n
+    * from scipy import stats
+
+    References
+    ----------
+    Source materials: \n
+    1. Wikipedia <https://en.wikipedia.org/wiki/Power_transform#Box%E2%80%93Cox_transformation>
+
+    Returns
+    -------
+    boxcox_var : float
+        Series representing transformed variable using Box-Cox transformation.
+    """
+    def __init__(self, data, var_name, transformation_dict,
+                          print_details=True):
+        
+
+    boxcox_var, param = stats.boxcox(data[var_name]+1)
+    if print_details == True:
+        print(var_name,'Box-Cox transformation Lambda value -',param)
+    transformation_dict[var_name] = param
+    return boxcox_var
