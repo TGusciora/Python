@@ -223,7 +223,7 @@ class FeatureBinning:
         DataFrame with independent variables to analyze.
     y : str
         Series with dependent variable. Must be continuous.
-    Var_list : str
+    var_list : str
         List of variable names to create optimal bins for and calculate WoE/IV
         /Target encoders. Must be a subset of X_df
         columns.
@@ -231,30 +231,27 @@ class FeatureBinning:
         Quoting source materials 2. : "The pre-binning method. Supported
         methods are “cart” for a CART decision tree,  “quantile” to generate
         prebins with approximately same frequency and “uniform” to generate
-        prebins with equal width."
+        prebins with equal width.".
     cat_coff : float, default = 0.01
         If category size is less than cat_coff % (default 1%) of total
         population , then it will be grouped in separate group. All categories
         with size lesser than cat_coff % will be grouped together.
     n_bins : int, default = 10
         Max limit to number of bins (grouped categories).
+    metric : str, default = "WoE"
+        Numeric value calculated as default value for variable / bin group.
+        By default calculates Weight Of Evidence (WoE), possible to calculate
+        "mean".
     print_details : bool, default = True
         Parameter controlling informative output. If set to false function
         will supress displaying of detailed information.
 
     Attributes
     ----------
-    data_in : pandas DataFrame
-        Dataset with features to be analyzed and transformed
-    na_var_list : []
-        Name of discrete variable list. Binary var_name + "_NA" variables
-        are appended to that list.
-    numerical_var_list : []
-        list of numeric variables
-    data_out : pandas DataFrame
-        Dataset with transformed features
-    dropped_cols : pandas DataFrame
-        list of columns to be dropped because of too many missing values
+    optbin_dict : dictionary
+        Dictionary storing variable transformation information
+    target_sum : float
+        Sum of dependent variable (y)
 
     Notes
     -------------------
@@ -264,31 +261,26 @@ class FeatureBinning:
 
     Methods
     -------
-    output(self)
-        Imports file_name and returns as pandas DataFrame.
-    __init__(self, file_name)
+    transform(self, data, var_name)
+        Uses stored class optbin dictionary to transform var_name from data
+        and outputs variable in return.
+    __init__(self, X_df, y, var_list, prebin_method="quantile", cat_coff=0.01, n_bins=10, metric="WoE", print_details=True)
         Constructor method.
     _optbin_create(self)
-        Dropping variables with missing value % higher than cutoff_missing
-        parameter value.
-    transform(self, data, var_name)
-        If % of missing values are higher than cutoff_fill, then fills
-        selected variables with give fill_method (available values : mode,
-        mean, median). Also creates binary _NA variables where 1 indicates
-        that there was value imputation made for particular record.
-    _convert_categories(self)
-        Convert non-numeric variables to "category" type.
+        Uses continuous optimal binning library to create bins for each
+        variable from var_list. Calculates statistics for each bin and
+        stores as dictionary.
 
     References
     ----------
     Source materials: \n
     1. Binning library <http://gnpalencia.org/optbinning/binning_continuous.html> \n
     2. WOE <https://www.listendata.com/2019/08/WOE-IV-Continuous-Dependent.html>
-
     """
     def __init__(self, X_df, y, var_list, prebin_method="quantile",
                  cat_coff=0.01, n_bins=10, metric="WoE", print_details=True):
-        """ Constructor method
+        """
+        Constructor method
         """
         self.optbin_dict = {}
         self.target_sum = y.sum()
@@ -304,6 +296,12 @@ class FeatureBinning:
 
     def _optbin_create(self):
         """
+        Create optimal binning dictionary.
+
+        Use optbin library to create optimal bins for each variable, calculates
+        metrics and stores for future reference / transformations based on
+        gathered data.
+
         Returns
         -------
         optbin_dict : Dictionary
@@ -320,7 +318,7 @@ class FeatureBinning:
                     Max - maximum value of dependent variable by bin \n
                     Zeros count - "0" values of dependent variable by bin \n
                     WoE - Weight of Evidence (See: source materials 2).\n
-                    IV - Information Value specyfiying prediction power by bin\n
+                    IV - Information Value specyfiying prediction power by bin
         """
         for i in self.var_list:
             self.optbin_dict[i] = {}
@@ -356,16 +354,13 @@ class FeatureBinning:
 
     def transform(self, data, var_name):
         """
-        Transforming dataset variables using stored transformation dictionary.
+        Transform dataset variables using stored transformation dictionary.
 
-        Transforming variable var_name from Dataframe data using optbin_dict
+        Transform variable var_name from Dataframe data using optbin_dict
         to return encoded value of Weight of Evidence (WoE) or mean dependent
-        value from corresponding bin (see Optbin_create function). Further
-        possible enhancements: adding troubleshooting like try except
-        instructions for values of metric outside ["WoE", "Mean"] list.
-        Currently for every value that is not equal to "WoE" function will
-        transform variable using "Mean"
-        metric.
+        value from corresponding bin (see Optbin_create function). For every
+        value that is not equal to "WoE" function will transform variable
+        using "Mean" metric.
 
         Parameters
         ----------
@@ -374,17 +369,6 @@ class FeatureBinning:
         var_name : str
             Variable name (dtype = categorical) from data that will be
             transformed for corresponding metric from optbin_dict.
-        optbin_dict : str
-            Dictionary name from Optbin_create function. Storing information
-            about optimal bins (grouped categories) and corresponding Weight
-            of Evidence (WoE) and mean dependent variable value from bin.
-        metric : str, default = 'WoE'
-            Metric to be returned instead of var_name category. Returns
-            optbin_dict[var_name]["bin_table"]["WoE"] for "Woe" value or
-            optbin_dict[var_name]["bin_table"]["Mean"] for "Mean" value.
-        print_details : bool, default = True
-            Parameter controlling informative output. If set to false
-            function will supress displaying of detailed information.
 
         Returns
         -------
@@ -452,11 +436,14 @@ class BoxCox:
         Series representing transformed variable using Box-Cox transformation.
     """
     def __init__(self, data, var_name, transformation_dict,
-                          print_details=True):
+                 print_details=True):
+        self.data = data
+        self.var_name = var_name
+        self.transformation_dict = transformation_dict
+        self.print_details = print_details
         
-
-    boxcox_var, param = stats.boxcox(data[var_name]+1)
-    if print_details == True:
-        print(var_name,'Box-Cox transformation Lambda value -',param)
-    transformation_dict[var_name] = param
-    return boxcox_var
+        boxcox_var, param = stats.boxcox(data[var_name]+1)
+        if print_details is True:
+            print(var_name,'Box-Cox transformation Lambda value -',param)
+        transformation_dict[var_name] = param
+        return boxcox_var
