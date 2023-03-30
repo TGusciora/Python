@@ -309,16 +309,16 @@ class FeatureBinning:
             values
             optbin_dict[i]["bin_table"] - table containing information about
             grouped category variables with below variables:
-                    Bin - list of values representing grouped categories\n
-                    Count - number of observations in bin \n
-                    Count % - % of all observations in dataset \n
-                    Sum - sum of dependent variable by bin \n
-                    Mean - mean of dependent variable by bin \n
-                    Min - minimum value of dependent variable by bin \n
-                    Max - maximum value of dependent variable by bin \n
-                    Zeros count - "0" values of dependent variable by bin \n
-                    WoE - Weight of Evidence (See: source materials 2).\n
-                    IV - Information Value specyfiying prediction power by bin
+                Bin - list of values representing grouped categories\n
+                Count - number of observations in bin \n
+                Count % - % of all observations in dataset \n
+                Sum - sum of dependent variable by bin \n
+                Mean - mean of dependent variable by bin \n
+                Min - minimum value of dependent variable by bin \n
+                Max - maximum value of dependent variable by bin \n
+                Zeros count - "0" values of dependent variable by bin \n
+                WoE - Weight of Evidence (See: source materials 2).\n
+                IV - Information Value specyfiying prediction power by bin
         """
         for i in self.var_list:
             self.optbin_dict[i] = {}
@@ -395,17 +395,19 @@ class FeatureBinning:
         transformed = data[var_name].map(dict_clean).fillna(dict_clean['Other'])
         return transformed
 
-class BoxCox:
+
+def boxcox_transformation(data, var_name, transformation_dict,
+                          print_details=True):
     """
     Box-Cox variable transformation.
 
     Transforming variable var from Dataframe data using Box-Cox transformation
-    (power transform) in order to provide better predictive characteristics
+    (power transform on series monotonically transformed by adding 1 - to avoid
+    infinite results) in order to provide better predictive characteristics
     (stabilizes variance, makes variable distribution looking "more like"
     normal distribution. Also updates pointed dictionary with lambda values
     for transformed variables. This can be used for future scoring of new
     data. Returns transformed variable.
-    Source material on Box-Cox transformation:
 
     Parameters
     ----------
@@ -420,6 +422,11 @@ class BoxCox:
         Parameter controlling informative output. If set to false function
         will supress displaying of detailed information.
 
+    Returns
+    -------
+    boxcox_var : float
+        Series representing transformed variable using Box-Cox transformation.
+
     Notes
     -------------------
     Required libraries: \n
@@ -429,21 +436,9 @@ class BoxCox:
     ----------
     Source materials: \n
     1. Wikipedia <https://en.wikipedia.org/wiki/Power_transform#Box%E2%80%93Cox_transformation>
-
-    Returns
-    -------
-    boxcox_var : float
-        Series representing transformed variable using Box-Cox transformation.
     """
-    def __init__(self, data, var_name, transformation_dict,
-                 print_details=True):
-        self.data = data
-        self.var_name = var_name
-        self.transformation_dict = transformation_dict
-        self.print_details = print_details
-        
-        boxcox_var, param = stats.boxcox(data[var_name]+1)
-        if print_details is True:
-            print(var_name,'Box-Cox transformation Lambda value -',param)
-        transformation_dict[var_name] = param
-        return boxcox_var
+    boxcox_var, param = stats.boxcox(data[var_name]+1)
+    if print_details is True:
+        print(var_name, 'Box-Cox transformation Lambda value -', param)
+    transformation_dict[var_name] = param
+    return boxcox_var
