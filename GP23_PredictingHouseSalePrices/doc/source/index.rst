@@ -35,6 +35,14 @@ Module: Features - Build features
    :show-inheritance:
    :private-members:
 
+Module: Model - hyperparameters
+==================================
+.. automodule:: gp23package.models.hyperparameters_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
 Indices and tables
 ==================================
 

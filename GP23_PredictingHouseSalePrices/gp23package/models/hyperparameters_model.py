@@ -3,17 +3,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import (KFold, GridSearchCV)
 from sklearn.linear_model import LinearRegression
-from sklearn.feature_selection import RFE
+from sklearn.feature_selection import (RFE,SequentialFeatureSelector, SelectFromModel)
+from sklearn.linear_model import RidgeCV
 
 
 def kfold_nFeaturesSelector(data_in, features_in, target, random_state,
                             max_features, n_splits=5, shuffle=True):
     """
-    Uses k-fold linear regression to estimate average score per #parameters.
+    Use k-fold linear regression to estimate average score per #parameters.
 
-    Applicable for regression tasks. Using cross-validation tests average
-    R-Squared metric on validation dataset based on number of chosen
-    variables. Estimated by linear model.
+    Estimate average R-squared adjustment on kfold cross-validated sample
+    grouped by number of explanatory variables used. Applicable for regression
+    tasks. Using cross-validation tests average. Estimated by linear model.
 
     Library imports:
     from sklearn.model_selection import KFold
@@ -23,27 +24,30 @@ def kfold_nFeaturesSelector(data_in, features_in, target, random_state,
     ----------
     data_in : str
         DataFrame with independent variables to analyze.
-    target : str
-        Series with dependent variable. Must be continuous.
     features_in : str
         List of variables to be chosen from. Must come from data_in DataFrame.
+    target : str
+        Series with dependent variable. Must be continuous.
+    random_state : int, default = 123
+        Random number generator seed. used for KFold sampling.
     max_features : int, default = 10
         Limit of features in iteration. Algorithm will compute for models from
         i = 1 feature to max_features.
     n_splits : int, default = 5
         Cross-validation parameter - will split data_in to n_splits equal
-        parts. VarClusHi library)
+        parts. VarClusHi library).
     shuffle : bool, default = True
         Whether to shuffle the data before splitting into batches. Note that
         the samples within each split will not be shuffled.
 
     Returns
     -------
-
-    Top 10 R-squared scores by mean test-set score and corresponding number of
-    features category.
-    Line plot of number of features selected versus average train & test
-    sample R-squared scores.
+    table: top10 scores
+        Top 10 R-squared scores by mean test-set score and corresponding number of
+        features category.
+    plot: mean scores plot
+        Line plot of number of features selected versus average train & test
+        sample R-squared scores.
 
     Notes
     -------------------
@@ -53,16 +57,10 @@ def kfold_nFeaturesSelector(data_in, features_in, target, random_state,
     import numpy as np: \n
     from sklearn.model_selection import (KFold, GridSearchCV): \n
     from sklearn.linear_model import LinearRegression: \n
-    from sklearn.feature_selection import RFE: \n
-
-    References
-    ----------
-    Source materials: \n
-    1. Binning library <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html> \n
-    2. WOE <https://www.kaggle.com/code/jnikhilsai/cross-validation-with-linear-regression>
+    from sklearn.feature_selection import RFE
     """
     # cross-validation configuration
-    folds = KFold(n_splits=5, shuffle=True, random_state=seed)
+    folds = KFold(n_splits=5, shuffle=True, random_state=random_state)
 
     # Removing low variance to avoid problems with cross_validation
     features_exclude = list(data_in[features_in].std()[data_in[features_in].std() < 0.1].index)
@@ -107,3 +105,71 @@ def kfold_nFeaturesSelector(data_in, features_in, target, random_state,
     print(cv_results[["param_n_features_to_select", "mean_train_score",
                       "mean_test_score"]].sort_values("mean_test_score",
                                                       ascending=False).head(10))
+
+
+def varSelect_fwdBckw(data_in, features_in, target, n_features_space,
+                      variable_dictionary):
+    """
+    Select subsets of n best predictors and save in a variable dictionary.
+
+    Creates dictionary of variable sets for modelling using RidgeCV 
+    regression. Variables are chosen using 3 algorithms: Select from model,
+    forward selection, backwards selection with constraint to no more 
+    variables than indicated in n_features_space list.
+
+    Parameters
+    ----------
+    data_in : str
+        DataFrame with independent variables to analyze.
+    features_in : str
+        List of variables to be chosen from. Must come from data_in DataFrame.
+    target : str
+        Series with dependent variable. Must be continuous.
+    n_features_space : list
+        List of limit of selected features. Passed value of [1,2,3] will
+        select 3 sets of features for each method.
+    variable_dictionary : str
+        Pointer at variable dictionary that will be updated with
+        variable_dictionary[value] = [list of selected features]
+
+    Returns
+    -------
+    Updates variable dictionary with SFM_n , FWD_n and BKWD_n keys and
+    corresponding list of variables, where n is representing element
+    from n_features_space.
+
+    Notes
+    -------------------
+    Required libraries: \n
+    * from sklearn.linear_model import RidgeCV \n
+    * from sklearn.feature_selection import (SequentialFeatureSelector, SelectFromModel)
+
+    References
+    ----------
+    Source materials: \n
+    1. Diabetes use-case <https://scikit-learn.org/stable/auto_examples/feature_selection/plot_select_from_model_diabetes.html>
+    """
+
+    # Estimate coefficients of parameters with Ridge Cross-Validation estimator
+    ridge = RidgeCV(alphas=np.logspace(-6, 6, num=5)).fit(data_in[features_in],
+                                                          target)
+    importance = np.abs(ridge.coef_)
+    feature_names = np.array(data_in[features_in].columns)
+
+    for n in n_features_space:
+        n_features = n
+        threshold = np.sort(importance)[-n_features] + 0.01
+        sfm = SelectFromModel(ridge, 
+                              threshold=threshold).fit(data_in[features_in],
+                                                       target)
+        sfs_forward = SequentialFeatureSelector(ridge,
+                                                n_features_to_select=n_features,
+                                                direction="forward").fit(data_in[features_in],
+                                                                         target)
+        sfs_backward = SequentialFeatureSelector(ridge,
+                                                 n_features_to_select=n_features,
+                                                 direction="backward").fit(data_in[features_in],
+                                                                          target)
+        variable_dictionary["SFM_"+str(n)] = list(feature_names[sfm.get_support()])
+        variable_dictionary["FWD_"+str(n)] = list(feature_names[sfs_forward.get_support()])
+        variable_dictionary["BKWD_"+str(n)] = list(feature_names[sfs_backward.get_support()])

@@ -3,6 +3,7 @@ import numpy as np
 from optbinning import ContinuousOptimalBinning
 from scipy import stats
 
+ 
 class FeatureCorrection:
     """
     Transforming dataset to fix numerical variables issues with missing values.
