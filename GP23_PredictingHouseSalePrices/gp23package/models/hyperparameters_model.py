@@ -159,7 +159,7 @@ def varSelect_fwdBckw(data_in, features_in, target, n_features_space,
     for n in n_features_space:
         n_features = n
         threshold = np.sort(importance)[-n_features] + 0.01
-        sfm = SelectFromModel(ridge, 
+        sfm = SelectFromModel(ridge,
                               threshold=threshold).fit(data_in[features_in],
                                                        target)
         sfs_forward = SequentialFeatureSelector(ridge,
