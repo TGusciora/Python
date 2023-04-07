@@ -9,56 +9,20 @@ from sklearn.model_selection import GridSearchCV
 
 class EstimatorSelectionHelper:
     """
+    Iterate through dictionaries of models and returning sum of results.
+
     Class used for iterating through two dictionaries - one with list of
     models, and one with list of parameters (describing hyperparameter space).
-    Via source materials: "The code above defines the helper class, now you
-    need to pass it a dictionary of models and a dictionary of parameters for
-    each of the models."
-
-    Library imports:
-    from sklearn.model_selection import GridSearchCV
-
-    Source materials:
-    1. https://www.davidsbatista.net/blog/2018/02/23/model_optimization/
-
-    Use k-fold linear regression to estimate average score per #parameters.
-
-    Estimate average R-squared adjustment on kfold cross-validated sample
-    grouped by number of explanatory variables used. Applicable for regression
-    tasks. Using cross-validation tests average. Estimated by linear model.
-
-    Library imports:
-    from sklearn.model_selection import KFold
-    from sklearn.linear_model import LinearRegression
+    For each combination of two dictionaries class instantiates model object,
+    trains it on provided dataset using k-fold linear regression to estimate
+    average score per #parameters. Applicable for regression.
 
     Parameters
     ----------
-    data_in : str
-        DataFrame with independent variables to analyze.
-    features_in : str
-        List of variables to be chosen from. Must come from data_in DataFrame.
-    target : str
-        Series with dependent variable. Must be continuous.
-    random_state : int, default = 123
-        Random number generator seed. used for KFold sampling.
-    max_features : int, default = 10
-        Limit of features in iteration. Algorithm will compute for models from
-        i = 1 feature to max_features.
-    n_splits : int, default = 5
-        Cross-validation parameter - will split data_in to n_splits equal
-        parts. VarClusHi library).
-    shuffle : bool, default = True
-        Whether to shuffle the data before splitting into batches. Note that
-        the samples within each split will not be shuffled.
-
-    Returns
-    -------
-    table: top10 scores
-        Top 10 R-squared scores by mean test-set score and corresponding number of
-        features category.
-    plot: mean scores plot
-        Line plot of number of features selected versus average train & test
-        sample R-squared scores.
+    models : str
+        Dictionary of model object instances.
+    params : str
+        Dictionary of hyperparameters for each model object from models dict.
 
     Notes
     -------------------
@@ -76,8 +40,27 @@ class EstimatorSelectionHelper:
     from sklearn.linear_model import Lars \n
     from sklearn.linear_model import RidgeCV \n
     from sklearn.model_selection import GridSearchCV
+
+    Methods
+    -------
+    score_summary(self, sort_by='mean_score')
+        Return summary of scores.
+    fit(self, X, y, cv=3, n_jobs=3, verbose=1, scoring=None, refit=False))
+        Fit models from dictionaries to data using GridSearchCV.
+    __init__(self, models, params)
+        Constructor method.
+
+    References
+    ----------
+    Source materials: \n
+    1. Blog <https://www.davidsbatista.net/blog/2018/02/23/model_optimization/>
     """
     def __init__(self, models, params):
+        """
+        Constructor method.
+        """
+        # DQ check - raise ValueError if param dict doesn't have corresponding
+        # items in models dict
         if not set(models.keys()).issubset(set(params.keys())):
             missing_params = list(set(models.keys()) - set(params.keys()))
             raise ValueError("Some estimators are missing parameters: %s"
@@ -88,6 +71,33 @@ class EstimatorSelectionHelper:
         self.grid_searches = {}
 
     def fit(self, X, y, cv=3, n_jobs=3, verbose=1, scoring=None, refit=False):
+        """
+        Fit models from dictionaries on given dataset using cross-validation.
+
+        Using each model from models dictionary and set of hyperparameters
+        from params dictionary method fits model to the dataset and estimates
+        parameters.
+
+        Parameters
+        ----------
+        X : str
+            DataFrame with independent variables to analyze.
+        y : str
+            Series with dependent variable.
+        cv : int, default = 3
+            Cross-validation parameter - splits X dataset into cv independent
+            samples.
+        n_jobs : int, default = 3
+            Multi-threading parameter - runs n_jobs in parallel.
+        verbose : int, default = 1
+            Controlling output - values from 0 (no messages) to 3 (all
+            messages and times of computation).
+        scoring : str, default = None
+            Test evaluation strategy.
+        refit : bool, default = False
+            Refit an estimator using the best found parameters on the whole
+            dataset.
+        """
         for key in self.keys:
             print("Running GridSearchCV for %s." % key)
             model = self.models[key]
@@ -99,6 +109,24 @@ class EstimatorSelectionHelper:
             self.grid_searches[key] = gs
 
     def score_summary(self, sort_by='mean_score'):
+        """
+        Create model fit summary scores.
+
+        Creates DataFrame containing information about model (estimator) and
+        cross-validation fit scores on provided dataset: minimum, maximum,
+        mean and standard deviation.
+
+        Parameters
+        ----------
+        sort_by : str, default = 'mean_score'
+            Variable used to sort resulting dataframe (descending).
+
+        Returns
+        -------
+        df: DataFrame
+            Pandas Dataframe with cross-validation estimation results for each
+            model.
+        """
         def row(key, scores, params):
             d = {
                  'estimator': key,

@@ -43,8 +43,8 @@ def kfold_nFeaturesSelector(data_in, features_in, target, random_state,
     Returns
     -------
     table: top10 scores
-        Top 10 R-squared scores by mean test-set score and corresponding number of
-        features category.
+        Top 10 R-squared scores by mean test-set score and corresponding 
+        number of features category.
     plot: mean scores plot
         Line plot of number of features selected versus average train & test
         sample R-squared scores.
@@ -130,13 +130,19 @@ def varSelect_fwdBckw(data_in, features_in, target, n_features_space,
         select 3 sets of features for each method.
     variable_dictionary : str
         Pointer at variable dictionary that will be updated with
-        variable_dictionary[value] = [list of selected features]
+        variable_dictionary[value] = [list of selected features].
 
     Returns
     -------
-    Updates variable dictionary with SFM_n , FWD_n and BKWD_n keys and
-    corresponding list of variables, where n is representing element
-    from n_features_space.
+    variable_dictionary["SFM_"+str(n)] : list
+        List of variables stored as dictionary entry. Chosen by select from
+        model method.
+    variable_dictionary["FWD_"+str(n)] : list
+        List of variables stored as dictionary entry. Chosen by forward
+        variable selection method.
+    variable_dictionary["BKWD_"+str(n)] : list
+        List of variables stored as dictionary entry. Chosen by backward
+        variable selection method.
 
     Notes
     -------------------

@@ -43,6 +43,14 @@ Module: Model - hyperparameters
    :show-inheritance:
    :private-members:
 
+Module: Model - hyperparameters
+==================================
+.. automodule:: gp23package.models.train_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
 Indices and tables
 ==================================
 
