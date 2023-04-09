@@ -10,6 +10,7 @@ numpy==1.24.1
 optbinning==0.17.2
 os
 pandas==1.5.3
+pickle
 pylab
 scipy==1.10.0
 seaborn==0.12.2
