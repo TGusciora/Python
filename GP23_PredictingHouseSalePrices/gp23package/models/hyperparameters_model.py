@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.model_selection import (KFold, GridSearchCV)
 from sklearn.linear_model import LinearRegression
-from sklearn.feature_selection import (RFE,SequentialFeatureSelector, SelectFromModel)
+from sklearn.feature_selection import (RFE, SequentialFeatureSelector, SelectFromModel)
 from sklearn.linear_model import RidgeCV
 
 
@@ -15,10 +15,6 @@ def kfold_nFeaturesSelector(data_in, features_in, target, random_state,
     Estimate average R-squared adjustment on kfold cross-validated sample
     grouped by number of explanatory variables used. Applicable for regression
     tasks. Using cross-validation tests average. Estimated by linear model.
-
-    Library imports:
-    from sklearn.model_selection import KFold
-    from sklearn.linear_model import LinearRegression
 
     Parameters
     ----------
