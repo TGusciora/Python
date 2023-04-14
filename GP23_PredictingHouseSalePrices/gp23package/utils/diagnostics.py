@@ -8,6 +8,7 @@ import statsmodels.stats.diagnostic as smd
 import matplotlib as plt
 import seaborn as sn
 import pandas as pd
+import numpy as np
 
 
 class LinearDiagnostics():
@@ -42,6 +43,10 @@ class LinearDiagnostics():
     target : str
         Series of target variable value. Must have corresponding index value
         with data_in.
+    scoring_dict : str
+        Stored dictionary with list of variables selected for scoring.
+    model_list : str
+        Stored dictionary with list of estimated models.
     significance_level : float, default = 0.05
         Probability of rejecting H0 when it is true. Parameter for statistical
         tests. Against significance level we find critical value for
@@ -64,28 +69,68 @@ class LinearDiagnostics():
     * import matplotlib as plt \n
     * import seaborn as sn \n
     * import pandas as pd
+    * import numpy as np
     """
 
-    def __init__(self, model_in, data_in, target, significance_level=0.05):
+    def __init__(self, model_in, data_in, target, scoring_dict, model_list,
+                 significance_level=0.05):
         """
         Constructor method.
+
+        Constructor method creating LinearDiagnostics class object.
+
+        Parameters
+        ----------
+        model_in : str
+            Name of model stored in models_list dictionary
+        data_in : str
+            Dataset on which predictions will be made and residuals calculated.
+            Must have variables required by the model present.
+        target : str
+            Series of target variable value. Must have corresponding index value
+            with data_in.
+        scoring_dict : str
+            Stored dictionary with list of variables selected for scoring.
+        model_list : str
+            Stored dictionary with list of estimated models.
+        significance_level : float, default = 0.05
+            Probability of rejecting H0 when it is true. Parameter for statistical
+            tests. Against significance level we find critical value for
+            statistical test and compare it to statistic.
         """
         self.model = model_in
         self.data = data_in
         self.target = target
         self.alpha = significance_level
         # calculating residuals
-        prdct_set = data_in[scoring_dict[model_list[self.model]['variables']]]
-        self.predictions = model_list[self.model]['model'].predict(prdct_set)
+        vars = model_list[self.model]['variables']
+        self.prdct_set = data_in[scoring_dict[vars]]
+        self.predictions = model_list[self.model]['model'].predict(self.prdct_set)
         self.results_df = pd.DataFrame()
         self.results_df['predicted'] = list(self.predictions)
         self.results_df['actual'] = list(self.target)
         self.results_df['residual'] = self.results_df['predicted'] - self.results_df['actual']
         self.results_df = self.results_df.sort_values(by='residual').reset_index(drop=True)
+        self.residual_stats()
+        self.res_kde()
+        self.res_qq()
+        self.jb_normal_test()
+        self.sw_normal_test()
+        self.ad_normal_test()
+        self.normal_test()
+        self.dw_autocorr_test()
+        self.homoskedasticity_plot()
+        self.w_test_homoskedasticity()
+        self.bp_test_homoskedasticity()
+        self.vif()
+        self.corr_matrix()
 
     def residual_stats(self):
         """
         Calculate residual descriptive statistics on pointed dataset.
+
+        Calculating summary statistics about residuals (true - predicted)
+        values of dependent variable.
         """
         print('*** Test data residuals statistics ***')
         display(HTML(self.results_df.describe().to_html()))
@@ -125,6 +170,8 @@ class LinearDiagnostics():
     def sw_normal_test(self):
         """
         Perform Shapiro-Wilk test for normality of residuals.
+
+
         """
     # 'Shapiro-Wilk test for normality'
         print('Shapiro-Wilk test for normality')
@@ -164,15 +211,17 @@ class LinearDiagnostics():
         """
         
         """
-        #Normal test    
+        # Normal test    
         print('Normal test for normality')
-        stat, p = stats.normaltest(results_df['residual'])
+        stat, p = stats.normaltest(self.results_df['residual'])
         print('Statistics=%.3f, p=%.3f' % (stat, p))
         # interpret
         if p > self.alpha:
-            print('On', self.alpha,'significance level we fail to reject H0 that residuals come from a normal distribution.')
+            print('On', self.alpha, 'significance level we fail to reject H0,',
+                  ' that residuals come from a normal distribution.')
         else:
-            print('On', self.alpha,'significance level we reject H0 that residuals come from a normal distribution.')
+            print('On', self.alpha, 'significance level we reject H0 that',
+                  'residuals come from a normal distribution.')
         print()
 
     def dw_autocorr_test(self):
@@ -180,36 +229,42 @@ class LinearDiagnostics():
         
         """
         print('*** Durbin-Watson residual autocorrelation test ***')
-        durbin = sm.stats.stattools.durbin_watson(results_df['residual'])
-        print('Statistic value -',durbin)
+        durbin = sm.stats.stattools.durbin_watson(self.results_df['residual'])
+        print('Statistic value -', durbin)
         if durbin > 2.5:
-            print('Statistic indicates negative serial correlation between residuals.')
+            print('Statistic indicates negative serial correlation between',
+                  ' residuals.')
         elif durbin > 1.5:
-            print('Statistic indicates no serial correlation between residuals.')
+            print('Statistic indicates no serial correlation between ',
+                  'residuals.')
         else:
-            print('Statistic indicates positive serial correlation between residuals.')
+            print('Statistic indicates positive serial correlation ',
+                  'between residuals.')
         print()
 
     def homoskedasticity_plot(self):
         """
-        
         """
         print('*** Investigating homoscedasticity of residuals ***')
-        #Plot the model's residuals against the predicted values of y
+        # Plot the model's residuals against the predicted values of y
         plt.xlabel('Predicted value')
         plt.ylabel('Residual error')
         plt.title('Model predicted values against residuals')
-        plt.scatter(results_df['predicted'], results_df['residual'])
+        plt.scatter(self.results_df['predicted'], self.results_df['residual'])
         plt.show()
-        
-        plt.scatter(results_df['actual'], results_df['predicted'], alpha=.35)
-        plt.title("Plot of Linear Regression Test Values, Predicted vs. Actual")
+        plt.scatter(self.results_df['actual'], self.results_df['predicted'],
+                    alpha=.35)
+        plt.title("Plot of Regression Test Values, Predicted vs. Actual")
         plt.xlabel('True value')
         plt.ylabel('Predicted value')
-        plt.plot([min(results_df['actual'].min(), results_df['predicted'].min()),
-                max(results_df['actual'].max(), results_df['predicted'].max())],
-                [min(results_df['actual'].min(), results_df['predicted'].min()),
-                max(results_df['actual'].max(), results_df['predicted'].max())], color='black')
+        plt.plot([min(self.results_df['actual'].min(),
+                  self.results_df['predicted'].min()),
+                  max(self.results_df['actual'].max(),
+                  self.results_df['predicted'].max())],
+                 [min(self.results_df['actual'].min(),
+                  self.results_df['predicted'].min()),
+                  max(self.results_df['actual'].max(),
+                  self.results_df['predicted'].max())], color='black')
         plt.show()
     
     def w_test_homoskedasticity(self):
@@ -217,19 +272,24 @@ class LinearDiagnostics():
         
         """
         print('*** White test for Homoscedasticity ***')
-        #perform White's test
+        # perform White's test
         # H0 : Homoscedasticity is present (residuals are equally scattered)
-        # HA : Heteroscedasticity is present (residuals are not equally scattered)
-        white_test = smd.het_white(results_df['residual'], X_test[scoring_vars])
+        # HA : Heteroscedasticity is present (residuals are not equally
+        # scattered)
+        white_test = smd.het_white(self.results_df['residual'],
+                                   self.prdct_set)
 
-        #print results of White's test
-        labels = ['Test Statistic', 'Test Statistic p-value', 'F-Statistic', 'F-Test p-value']
+        # print results of White's test
+        labels = ['Test Statistic', 'Test Statistic p-value', 'F-Statistic',
+                  'F-Test p-value']
         print(lzip(labels, white_test))
 
         if white_test[1] > self.alpha:
-            print('On', self.alpha,'significance level we fail to reject H0 about homoscedasticity of residuals.')
+            print('On', self.alpha, 'significance level we fail to reject H0',
+                  ' about homoscedasticity of residuals.')
         else:
-            print('On', self.alpha,'significance level we reject H0 and assume heteroscedasticity of residuals.')
+            print('On', self.alpha, 'significance level we reject H0 and ',
+                  'assume heteroscedasticity of residuals.')
         print()
 
     def bp_test_homoskedasticity(self):
@@ -237,17 +297,21 @@ class LinearDiagnostics():
         
         """
         print('*** Breusch-Pagan homoscedasticity test***')
-        name = ['Lagrange multiplier statistic', 'p-value', 
-            'f-value', 'f p-value']
-        bpagan_test = smd.het_breuschpagan(results_df['residual'], X_test[scoring_vars])
+        name = ['Lagrange multiplier statistic', 'p-value',
+                'f-value', 'f p-value']
+        bpagan_test = smd.het_breuschpagan(self.results_df['residual'],
+                                           self.prdct_set)
         print(lzip(name, bpagan_test))
 
         if bpagan_test[1] > self.alpha:
-            print('On', self.alpha,'significance level we fail to reject H0 about homoscedasticity of residuals.')
+            print('On', self.alpha, 'significance level we fail to reject H0 ',
+                  'about homoscedasticity of residuals.')
         else:
-            print('On', self.alpha,'significance level we reject H0 and assume heteroscedasticity of residuals.')
+            print('On', self.alpha, 'significance level we reject H0 and ',
+                  'assume heteroscedasticity of residuals.')
         print()
-        # Either one can transform the variables to improve the model, or use a robust regression method
+        # Either one can transform the variables to improve the model, or
+        # use a robust regression method
         # that accounts for the heteroscedasticity. 
     
     def vif(self):
@@ -258,16 +322,18 @@ class LinearDiagnostics():
     print('*** Investigating Multicollinearity ***')
     print('*** Variance Inflation Factor (VIF) table***')
     vif_data = pd.DataFrame()
-    vif_data["feature"] = data_in[scoring_dict[model_list[model_in]['variables']]].columns
+    vif_data["feature"] = self.prdct_set.columns
     # calculating VIF for each feature
-    vif_data["VIF"] = [variance_inflation_factor(data_in[scoring_dict[model_list[model_in]['variables']]].values, i)
-                          for i in range(len(data_in[scoring_dict[model_list[model_in]['variables']]].columns))]
+    vif_data["VIF"] = [variance_inflation_factor(self.rdct_set.values, i)
+                       for i in range(len(self.prdct_set.columns))]
     display(HTML(vif_data.to_html()))
     if vif_data["VIF"].max() > 5:
-        print('There is indication (VIF > 5) that multicollinearity is present in the data.')
+        print('There is indication (VIF > 5) that multicollinearity is ',
+              'present in the data.')
     else:
-        print('Based on VIF there seems that there are no significant correlations between independent variables.')
-    print()    
+        print('Based on VIF there seems that there are no significant ',
+              'correlations between independent variables.')
+    print()
 
     def corr_matrix(self):
         """
@@ -275,9 +341,9 @@ class LinearDiagnostics():
         """
         print('*** Correlation Matrix ***')
         f, ax = plt.subplots(figsize=(40, 30))
-        mat = round(data_in[scoring_dict[model_list[model_in]['variables']]].corr('pearson'),2)
+        mat = round(self.prdct_set.corr('pearson'), 2)
         mask = np.triu(np.ones_like(mat, dtype=bool))
         cmap = sn.diverging_palette(230, 20, as_cmap=True)
-        sn.heatmap(mat, mask=mask, cmap=cmap, vmax=1, center=0, annot = True,
-                square=True, linewidths=.5, cbar_kws={"shrink": .7})
+        sn.heatmap(mat, mask=mask, cmap=cmap, vmax=1, center=0, annot=True,
+                   square=True, linewidths=.5, cbar_kws={"shrink": .7})
         plt.show()
