@@ -5,10 +5,11 @@ import statsmodels as sm
 import scipy.stats as stats
 import statsmodels.stats.stattools as smt
 import statsmodels.stats.diagnostic as smd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 import seaborn as sn
 import pandas as pd
 import numpy as np
+import pylab
 
 
 class LinearDiagnostics():
@@ -28,7 +29,6 @@ class LinearDiagnostics():
     * Durbin-Watson test for autocorrelation (residuals) \n
     * Predicted value vs residual scatter plot \n
     * Predicted value vs true value scatter plot \n
-    * White test for homoscedasticity (residuals) \n
     * Breusch-Pagan test for homoscedasticity (residuals) \n
     * Variance Inflation Factor (VIF) table \n
     * Correlation matrix of independent variables
@@ -68,13 +68,9 @@ class LinearDiagnostics():
     * import statsmodels.stats.diagnostic as smd \n
     * import matplotlib as plt \n
     * import seaborn as sn \n
-    * import pandas as pd
-    * import numpy as np
-
-        self._residual_stats()
-        self._res_kde()
-        self._res_qq()
-        self._jb_normal_test()
+    * import pandas as pd \n
+    * import numpy as np \n
+    * import pylab
 
     Methods
     -------
@@ -98,15 +94,12 @@ class LinearDiagnostics():
         Perform Durbin-Watson test for autocorrelation of residuals.
     _homoskedasticity_plot(self)
         Display predicted values vs residuals plot.
-    _w_test_homoskedasticity(self)
-        Perform White test for homoskedasticity.
     _bp_test_homoskedasticity(self)
         Perform Breusch-Pagan test for homoskedasticity.
     _vif(self)
         Display variance inflation factors (VIF).
     _corr_matrix(self)
         Display Pearson correlation matrix between variables.
-
     """
 
     def __init__(self, model_in, data_in, target, scoring_dict, model_list,
@@ -124,8 +117,8 @@ class LinearDiagnostics():
             Dataset on which predictions will be made and residuals calculated.
             Must have variables required by the model present.
         target : str
-            Series of target variable value. Must have corresponding index value
-            with data_in.
+            Series of target variable value. Must have corresponding index
+            value with data_in.
         scoring_dict : str
             Stored dictionary with list of variables selected for scoring.
         model_list : str
@@ -158,7 +151,7 @@ class LinearDiagnostics():
         self._normal_test()
         self._dw_autocorr_test()
         self._homoskedasticity_plot()
-        self._w_test_homoskedasticity()
+
         self._bp_test_homoskedasticity()
         self._vif()
         self._corr_matrix()
@@ -219,11 +212,11 @@ class LinearDiagnostics():
         name = ['Jarque-Bera', 'Chi^2 two-tail prob.', 'Skew', 'Kurtosis']
         jarqueBera_test = smt.jarque_bera(self.results_df['residual'])
         print(lzip(name, jarqueBera_test))
-        if jarqueBera_test[1] > self.significance_level:
-            print('On', self.significance_level, 'significance level we fail',
+        if jarqueBera_test[1] > self.alpha:
+            print('On', self.alpha, 'significance level we fail',
                   ' to reject H0 about normal distribution of residuals.')
         else:
-            print('On', self.significance_level, 'significance level we ',
+            print('On', self.alpha, 'significance level we ',
                   'reject H0 about normal distribution of residuals.')
         print()
 
@@ -257,22 +250,21 @@ class LinearDiagnostics():
         1. Wiki <https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test> \n
         """
         # Anderson-Darling Test for normality
-        # H0 : sample is drawn from a population that follows a 
+        # H0 : sample is drawn from a population that follows a
         # particular distribution.
         print('Anderson-Darling test for normality')
-        res_and = stats.anderson(self.results_df['residual'], dist='norm')
-        result = stats.anderson(self.results_df['residual'], dist='norm')
-        print('Statistic: %.3f' % result.statistic)
-        for i in range(len(result.critical_values)):
-            sl, cv = result.significance_level[i], result.critical_values[i]
-            if result.statistic < result.critical_values[i]:
-                print('Significance level - %.3f: %.3f (Critical Value) , ',
-                      'fail to reject H0 that sample comes from normal ',
-                      'distribution.' % (sl, cv))
+        self.result = stats.anderson(self.results_df['residual'], dist='norm')
+        print('Statistic: %.3f' % self.result.statistic)
+        for i in range(len(self.result.critical_values)):
+            sl, cv = self.result.significance_level[i], self.result.critical_values[i]
+            if self.result.statistic < self.result.critical_values[i]:
+                print('Significance level - %.3f: %.3f (Critical '% (sl, cv),
+                      'Value), fail to reject H0 that sample comes from ',
+                      'normal distribution.')
             else:
-                print('Significance level - %.3f: %.3f (Critical Value), ',
-                      'rejecting H0 that sample comes from normal ',
-                      'distribution.' % (sl, cv))
+                print('Significance level - %.3f: %.3f (Critical ' % (sl, cv),
+                      'Value), rejecting H0 that sample comes from normal ',
+                      'distribution.')
         print()
 
     def _normal_test(self):
@@ -347,36 +339,6 @@ class LinearDiagnostics():
                   max(self.results_df['actual'].max(),
                   self.results_df['predicted'].max())], color='black')
         plt.show()
-
-    def _w_test_homoskedasticity(self):
-        """
-        Perform White test for homoskedasticity.
-
-        References
-        ----------
-        Source materials: \n
-        1. Wiki <https://en.wikipedia.org/wiki/White_test> \n
-        """
-        print('*** White test for Homoscedasticity ***')
-        # perform White's test
-        # H0 : Homoscedasticity is present (residuals are equally scattered)
-        # HA : Heteroscedasticity is present (residuals are not equally
-        # scattered)
-        white_test = smd.het_white(self.results_df['residual'],
-                                   self.prdct_set)
-
-        # print results of White's test
-        labels = ['Test Statistic', 'Test Statistic p-value', 'F-Statistic',
-                  'F-Test p-value']
-        print(lzip(labels, white_test))
-
-        if white_test[1] > self.alpha:
-            print('On', self.alpha, 'significance level we fail to reject H0',
-                  ' about homoscedasticity of residuals.')
-        else:
-            print('On', self.alpha, 'significance level we reject H0 and ',
-                  'assume heteroscedasticity of residuals.')
-        print()
 
     def _bp_test_homoskedasticity(self):
         """
