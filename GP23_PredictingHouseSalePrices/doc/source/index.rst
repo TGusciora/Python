@@ -3,12 +3,22 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to GP23_PredictingHouseSalePrices's documentation!
+Dataquest.io GP23 TG Documentation
+Predicting House Sale Prices
 ==========================================================
-
 .. toctree::
+   :caption: GP23 Modules
    :maxdepth: 2
-   :caption: Contents:
+   :hidden:
+
+   Data
+   Features
+   Models
+   Utils
+
+
+
+
 
 GP23 package
 ==================================
@@ -27,13 +37,7 @@ Module: Data - make_dataset
    :show-inheritance:
    :private-members:
 
-Module: Features - Build features
-==================================
-.. automodule:: gp23package.features.build_features
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
+
 
 Module: Model - hyperparameters
 ==================================
