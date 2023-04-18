@@ -4,57 +4,18 @@
    contain the root `toctree` directive.
 
 Dataquest.io GP23 TG Documentation
-Predicting House Sale Prices
 ==========================================================
 .. toctree::
    :caption: GP23 Modules
    :maxdepth: 2
-   :hidden:
 
    Data
+   EDA
    Features
-   Models
-   Utils
+   Model
+   Diagnostics
 
-
-
-
-
-GP23 package
-==================================
-.. automodule:: gp23package
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-   :special-members:
-
-Module: Data - make_dataset
-==================================
-.. automodule:: gp23package.data.make_dataset
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-
-
-
-Module: Model - hyperparameters
-==================================
-.. automodule:: gp23package.models.hyperparameters_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-
-Module: Model - hyperparameters
-==================================
-.. automodule:: gp23package.models.train_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-
+.. https://stackoverflow.com/questions/43357912/using-sphinx-to-automatically-generate-a-separate-document-for-each-function
 Indices and tables
 ==================================
 

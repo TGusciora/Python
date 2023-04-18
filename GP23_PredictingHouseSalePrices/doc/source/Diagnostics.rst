@@ -4,22 +4,12 @@
    contain the root `toctree` directive.
 
 
-Module: Model 
+Module: Utils
 ==================================
 
-
-Hyperparameters
+Diagnostics
 ----------------------------------
-.. automodule:: gp23package.models.hyperparameters_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-
-
-Train
-----------------------------------
-.. automodule:: gp23package.models.train_model
+.. automodule:: gp23package.utils.diagnostics
    :members:
    :undoc-members:
    :show-inheritance:

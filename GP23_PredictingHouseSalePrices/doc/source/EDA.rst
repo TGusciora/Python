@@ -4,22 +4,12 @@
    contain the root `toctree` directive.
 
 
-Module: Model 
+Module: Explore & Visualise
 ==================================
 
-
-Hyperparameters
+EDA (Exploratory Data Analysis)
 ----------------------------------
-.. automodule:: gp23package.models.hyperparameters_model
-   :members:
-   :undoc-members:
-   :show-inheritance:
-   :private-members:
-
-
-Train
-----------------------------------
-.. automodule:: gp23package.models.train_model
+.. automodule:: gp23package.explore_visualise.eda
    :members:
    :undoc-members:
    :show-inheritance:
