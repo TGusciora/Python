@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 
-Module: Explore & Visualise
+Explore & Visualise
 ==================================
 
 EDA (Exploratory Data Analysis)

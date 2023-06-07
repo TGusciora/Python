@@ -9,27 +9,32 @@ def var_boxplot(var, data, target, title, xrotate=0):
     and provide frequency table for variable values. Caution:
     target variable has to be numeric.
 
-    Required libraries:
-    import matplotlib.pyplot as plt
-    import seaborn as sn
-    import pandas as pd
-    from IPython.display import display, HTML
+    Parameters
+    ----------
+    data : str
+        DataFrame to plot and calculate frequencies
+    var : str
+        Variable name for analysis. Provide in quotation marks.
+    target : str
+        Target variable name for analysis. Provide in quotation marks.
+    title : str
+        Plot title
+    xrotate : int
+        Rotation parameter for plt.xticks. By default = 0.
 
-    - **parameters**, **types**, **return** and **return types**::
+    Notes
+    -------------------
+    Required libraries: \n
+    * import matplotlib.pyplot as plt \n
+    * import seaborn as sn \n
+    * import pandas as pd \n
+    * from IPython.display import display, HTML
 
-    :param data: DataFrame to plot and calculate frequencies
-    :type data: str
-    :param var: Variable name for analysis. Provide in quotation marks.
-    :type var: str
-    :param target: Target variable name for analysis. Provide in
-    quotation marks.
-    :type target: str
-    :param title: Plot title
-    :type title: str
-    :param xrotate: Rotation parameter for plt.xticks. By default = 0.
-    :type xrotate: int
-    :return: Boxplot and frequency table
-    :rtype: Matplotlib plot
+    Returns
+    -------
+    Graphs : matplotlib plots
+       Boxplot and frequency table.
+
     """
     plt.figure(figsize=(10, 5))
     sn.boxplot(x=var, y=target, data=data)

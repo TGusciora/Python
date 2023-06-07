@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 
-Module: Model 
+Model 
 ==================================
 
 
@@ -20,6 +20,14 @@ Hyperparameters
 Train
 ----------------------------------
 .. automodule:: gp23package.models.train_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+Predict
+----------------------------------
+.. automodule:: gp23package.models.predict_model
    :members:
    :undoc-members:
    :show-inheritance:

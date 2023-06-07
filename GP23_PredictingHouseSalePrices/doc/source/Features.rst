@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 
-Module: Features - Build features
+Features - Build features
 ==================================
 .. automodule:: gp23package.features.build_features
    :members:
